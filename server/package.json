@@ -1,0 +1,18 @@
+{
+    "name": "uscis-timeline-server",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "format": "prettier --write \"src/**/*.{js}\"",
+        "start": "node src/index.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "cheerio": "^1.0.0-rc.3",
+        "prettier": "^2.0.5",
+        "superagent": "^5.2.2"
+    }
+}

@@ -1,0 +1,9 @@
+/server/node_modules
+/server/.DS_Store
+
+/client/node_modules
+/client/dist/
+/client/.cache/
+/client/.DS_Store
+
+.vscode
