@@ -1,38 +1,7 @@
-const superagent = require("superagent");
-const cheerio = require("cheerio");
-var fs = require("fs");
+const mongoose = require("mongoose");
 
-const BASE_URL =
-    "https://egov.uscis.gov/casestatus/mycasestatus.do?appReceiptNum=";
-
-function requestCaseStatus(caseNumber) {
-    return superagent.get(BASE_URL + `${caseNumber}`).then((res) => {
-        if (res.statusType === 2) {
-            return { caseNumber, ...HTMLParser(res.text) };
-        }
-    });
-}
-
-function HTMLParser(html) {
-    const $ = cheerio.load(html);
-    let paragraph = $("div.rows.text-center p").text();
-    let type = "unknown";
-    let date = "";
-
-    if (paragraph !== "") {
-        let typeRegex = /Form [a-zA-Z]{1}-[0-9]{1,}/;
-        let dateRegex = /[a-zA-Z]{3,9} [0-9]{1,2}, [0-9]{4}/;
-
-        type = paragraph.match(typeRegex)[0];
-        date = paragraph.match(dateRegex)[0];
-    }
-
-    return {
-        status: $("div.rows.text-center h1").text(),
-        date: date ? date : "",
-        type: type ? type : "",
-    };
-}
+const CaseOperation = require("./CaseOperation");
+const caseRequest = require("./request");
 
 async function spider() {
     let startNumber = 2019450900;
@@ -42,9 +11,11 @@ async function spider() {
     let redArr = [];
     for (let i = 0; i < range; i++) {
         redArr.push(
-            requestCaseStatus(center + (startNumber + i)).then((res) => {
-                result.push(res);
-            })
+            caseRequest
+                .requestCaseStatus(center + (startNumber + i))
+                .then((res) => {
+                    CaseOperation.saveOrUpdateCase(res);
+                })
         );
     }
     await Promise.all(redArr);
@@ -52,8 +23,26 @@ async function spider() {
     return result;
 }
 
+mongoose.connect("mongodb://localhost/uscis");
+const db = mongoose.connection;
+db.on("error", console.error.bind(console, "connection error:"));
+db.once("open", function () {
+    console.log("connected");
+});
+
 function main() {
-    spider();
+    // spider();
+    CaseOperation.saveOrUpdateCase({
+        receiptNumber: "EAC2019450900",
+        centerCode: "EAC",
+        numberPart: 2019450900,
+        year: 20,
+        workingDay: 194,
+        caseNumber: 50900,
+        status: "Case Was Approved",
+        date: "2020-04-29T07:00:00.000Z",
+        type: "Form I-129",
+    });
 }
 
 main();
